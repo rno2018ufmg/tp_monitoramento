@@ -6,6 +6,7 @@ import paho.mqtt.enums as paho_enums
 import pymongo
 import SensorEndpoint
 import EndpointOutput
+from math import sin
 
 class Endpoint:
     def __init__(self):
@@ -43,32 +44,19 @@ class EndpointEntities:
         self.logger_t = Thread(target= self.logger.print_infos, args=())
         for i, iterator in enumerate(self.sensors_info["sensors"]):
             sensor_id = str(iterator['sensor_id'])
-            self.sensors.insert(i, SensorEndpoint.SensorEndpoint(self.machine_id, sensor_id, self.logger, self.mongo_conn))
+            self.sensors.insert(i, SensorEndpoint.SensorEndpoint(self.machine_id, sensor_id, self.logger, self.mongo_conn, float(iterator['min_value']), float(iterator['max_value']), float(iterator['warning_value'])))
 
         self.sensors_thread: list[Thread] = []
         for i, iterator in enumerate(self.sensors):
             self.sensors_thread.insert(i, Thread(target = self.sensors[i].operation_loop, args=()))
-        
-        self.reader_t = Thread(target=self.finish_thread, args=())
-        
 
     def start_components(self):
-        self.reader_t.start()
         self.logger_t.start()
         for it in self.sensors_thread:
             it.start()
 
     def shutdown_all(self):
         exit(0)
-
-    def join_reader(self):
-        self.reader_t.join()
-
-    def finish_thread(self):
-        msg = input("Is time to finish [\"yes\"/\"no\"]? ")
-        while(msg != "yes"):
-            msg = input("Is time to finish [\"yes\"/\"no\"]? ")
-        self.shutdown_all()
 
 endpoint: Endpoint = Endpoint()
 endpoint.start()
@@ -79,4 +67,3 @@ endpoint.stop()
 
 endpointEntities : EndpointEntities = EndpointEntities(endpoint.get_message())
 endpointEntities.start_components()
-endpointEntities.join_reader()

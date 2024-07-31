@@ -1,8 +1,8 @@
 import sys
 import uuid
 import machineid
-import RAMMonitor
-import StorageMonitor
+import TemperatureMonitor
+import VoltageMonitor
 from threading import Thread
 import paho.mqtt.client as paho
 import paho.mqtt.enums as paho_enums
@@ -19,8 +19,8 @@ class Monitor:
         self.t = Thread(target=self.info_loop, args=(200,))
         self.reader_t = Thread(target=self.finish_thread, args=())
 
-        self.ram_monitor : RAMMonitor.RAMMonitor = RAMMonitor.RAMMonitor(self.machine_id)
-        self.storage_monitor : StorageMonitor.StorageMonitor = StorageMonitor.StorageMonitor(self.machine_id, self.path)
+        self.ram_monitor : TemperatureMonitor.TemperatureMonitor = TemperatureMonitor.TemperatureMonitor(self.machine_id)
+        self.storage_monitor : VoltageMonitor.VoltageMonitor = VoltageMonitor.VoltageMonitor(self.machine_id, self.path)
         self.ram_t = Thread(target=self.ram_monitor.trace_sensor, args=())
         self.storage_t = Thread(target=self.storage_monitor.trace_sensor, args=())
 
@@ -56,14 +56,20 @@ class Monitor:
             "machine_id": f"{uuid.UUID(machineid.id())}",
             "sensors":[
                 {
-                    "sensor_id": "ram_usage",
+                    "sensor_id": "comp_temp",
                     "data_type": "float",
-                    "data_interval": 100
+                    "data_interval": 100,
+                    "min_value": 15.0,
+                    "max_value": 65.0,
+                    "warning_value": 52.0
                 },
                 {
-                    "sensor_id": "disk_usage",
+                    "sensor_id": "comp_voltage",
                     "data_type": "float",
-                    "data_interval": 100
+                    "data_interval": 100,
+                    "min_value": 3.8,
+                    "max_value": 5.2,
+                    "warning_value": 4.8
                 }
             ]
         }

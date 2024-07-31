@@ -7,13 +7,15 @@ import pymongo
 import EndpointOutput
 
 class SensorEndpoint:
-    def __init__(self, machine_id : uuid.UUID, topic: str, logger: EndpointOutput.Logger, mongo_conn: pymongo.MongoClient):
+    def __init__(self, machine_id : uuid.UUID, topic: str, logger: EndpointOutput.Logger, mongo_conn: pymongo.MongoClient, lower_limit: float, upper_limit: float, warning_value: float):
         self.machine_id = machine_id
         self.sensor_type = topic
         self.mydb = mongo_conn[str(machine_id)]
         self.mycol = self.mydb[topic]
         self.topic : str = f"sensor/{self.machine_id}/{self.sensor_type}"
-        self.logger_callbacks = { "ram_usage": logger.push_ram, "disk_usage": logger.push_disk }
+        self.logger_callbacks = { "comp_temp": logger.push_temperature, "comp_voltage": logger.push_voltage }
+        self.logger_setters = { "comp_temp": logger.set_temp_limits, "comp_voltage": logger.set_voltage_limits }
+        self.logger_setters[topic](lower_limit, upper_limit, warning_value)
         self.active = True
         self.client_data: str = ""
 
